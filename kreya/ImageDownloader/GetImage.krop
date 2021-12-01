@@ -8,6 +8,15 @@
     },
     {
       "location": "GetImage-request-1.json"
+    },
+    {
+      "location": "GetImage-request-2.json"
+    },
+    {
+      "location": "GetImage-request-3.json"
+    },
+    {
+      "location": "GetImage-request-4.json"
     }
   ],
   "operationType": "duplexStreaming",

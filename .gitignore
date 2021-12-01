@@ -1,4 +1,5 @@
 /view/
+*.jpeg
 
 # Binaries for programs and plugins
 *.exe

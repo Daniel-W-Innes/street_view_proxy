@@ -21,11 +21,11 @@ type Tile struct {
 }
 type TileWorker struct {
 	Input  chan *TileRequest
-	Exit   chan struct{}
+	stop   chan struct{}
 	Output chan *Tile
 }
 
-func (t *TileWorker) GetTileWorker() {
+func (t *TileWorker) run() {
 	for {
 		select {
 		case tileRequest := <-t.Input:
@@ -35,7 +35,7 @@ func (t *TileWorker) GetTileWorker() {
 			} else {
 				t.Output <- &Tile{image: *tile, tileRequest: *tileRequest}
 			}
-		case <-t.Exit:
+		case <-t.stop:
 			return
 		}
 	}
@@ -70,11 +70,17 @@ func (t *TileWorker) GetMosaic() (image.Image, error) {
 func GetTileWorkers() *TileWorker {
 	tileWorker := TileWorker{
 		Input:  make(chan *TileRequest, (config.MaxY-config.MinY)*(config.MaxX-config.MinX)),
-		Exit:   make(chan struct{}),
+		stop:   make(chan struct{}),
 		Output: make(chan *Tile, (config.MaxY-config.MinY)*(config.MaxX-config.MinX)),
 	}
 	for i := 0; i < runtime.NumCPU()*config.WorkerMultiplier; i++ {
-		go tileWorker.GetTileWorker()
+		go tileWorker.run()
 	}
 	return &tileWorker
+}
+
+func (t *TileWorker) Exit() {
+	for i := 0; i < runtime.NumCPU()*config.WorkerMultiplier; i++ {
+		t.stop <- struct{}{}
+	}
 }
