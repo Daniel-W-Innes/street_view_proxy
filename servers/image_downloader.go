@@ -2,6 +2,7 @@ package servers
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"github.com/Daniel-W-Innes/street_view_proxy/config"
@@ -11,7 +12,6 @@ import (
 	"image"
 	"image/jpeg"
 	"image/png"
-	"io"
 	"log"
 	"os"
 )
@@ -32,11 +32,12 @@ func saveImage(img image.Image, path string) error {
 }
 
 type ImageDownloaderServer struct {
-	ApiKey string
+	TileWorker *workers.TileWorker
+	ApiKey     string
 	view.UnimplementedImageDownloaderServer
 }
 
-func getImage(tileWorker *workers.TileWorker, location *view.Location, key string, saveImages bool) (*view.Response, error) {
+func getImage(tileWorker *workers.TileWorker, location *view.Location, key string, saveImages bool) (*view.Image, error) {
 	log.Println("getting metadata")
 	metadata, err := proxy.GetMetadata(location, key)
 	log.Printf("got metadata: %v\n", metadata)
@@ -76,32 +77,9 @@ func getImage(tileWorker *workers.TileWorker, location *view.Location, key strin
 		ImageData: buf.Bytes(),
 	}
 	log.Println("sending response")
-	return &view.Response{Image: &outImage}, nil
+	return &outImage, nil
 }
 
-func (s *ImageDownloaderServer) GetImage(server view.ImageDownloader_GetImageServer) error {
-	log.Println("opened request channel")
-	tileWorker := workers.GetTileWorkers()
-	log.Println("created workers")
-	for {
-		log.Println("ready for request")
-		in, err := server.Recv()
-		log.Println("got request")
-		if err != nil {
-			tileWorker.Exit <- struct{}{}
-			if errors.Is(err, io.EOF) {
-				return nil
-			}
-			return err
-		}
-		location := in.Location
-		if location != nil {
-			response, err := getImage(tileWorker, location, s.ApiKey, config.SaveImages)
-			if err != nil {
-				tileWorker.Exit <- struct{}{}
-				return server.Send(&view.Response{Error: &view.Error{Description: err.Error()}})
-			}
-			return server.Send(response)
-		}
-	}
+func (s *ImageDownloaderServer) GetImage(_ context.Context, location *view.Location) (*view.Image, error) {
+	return getImage(s.TileWorker, location, s.ApiKey, config.SaveImages)
 }

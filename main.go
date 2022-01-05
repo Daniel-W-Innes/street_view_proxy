@@ -5,6 +5,7 @@ import (
 	"github.com/Daniel-W-Innes/street_view_proxy/config"
 	"github.com/Daniel-W-Innes/street_view_proxy/servers"
 	"github.com/Daniel-W-Innes/street_view_proxy/view"
+	"github.com/Daniel-W-Innes/street_view_proxy/workers"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -19,7 +20,7 @@ func main() {
 	var opts []grpc.ServerOption
 
 	server := grpc.NewServer(opts...)
-	view.RegisterImageDownloaderServer(server, &servers.ImageDownloaderServer{ApiKey: os.Getenv("API_KEY")})
+	view.RegisterImageDownloaderServer(server, &servers.ImageDownloaderServer{ApiKey: os.Getenv("API_KEY"), TileWorker: workers.GetTileWorkers()})
 	fmt.Printf("listen on port %d\n", config.Port)
 	err = server.Serve(lis)
 	if err != nil {

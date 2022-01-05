@@ -2,16 +2,16 @@ package config
 
 const (
 	Port             = 8080
-	MinX             = 13
-	MinY             = 6
-	MaxX             = 19
-	MaxY             = 10
-	Zoom             = 5
+	MinX             = 7
+	MinY             = 3
+	MaxX             = 9
+	MaxY             = 5
+	Zoom             = 4
 	InputSizeX       = 512
 	InputSizeY       = InputSizeX
 	OutputSizeX      = InputSizeX * (MaxX - MinX)
 	OutputSizeY      = InputSizeY * (MaxY - MinY)
 	WorkerMultiplier = 10
-	SaveImages       = true
+	SaveImages       = false
 	NumRetries       = 10
 )
